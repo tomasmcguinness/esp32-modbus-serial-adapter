@@ -3,7 +3,7 @@ The goal of this project is to provide a Modbus adapter with an onboard ESP32, a
 
 # Hardware
 
-The hardware folder contains a KiCad PCB design, designed around the ESP32-C6-MINI-1. Both the antenna and non-antenna versions will work here.
+The hardware folder contains a KiCad PCB design, designed around the ESP32-C6-MINI-1. Both the antenna and non-antenna (U1) versions will work here due to the location of the ESP32.
 
 # SDM120M - Electrical Sensor
 

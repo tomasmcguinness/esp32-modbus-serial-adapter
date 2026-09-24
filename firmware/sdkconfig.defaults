@@ -40,3 +40,8 @@ CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=4
 
 # Enable OTA Requestor
 CONFIG_ENABLE_OTA_REQUESTOR=y
+
+# Matter device identification
+# Vendor/product names and the version strings live in main/CHIPProjectConfig.h
+CONFIG_CHIP_PROJECT_CONFIG="main/CHIPProjectConfig.h"
+CONFIG_DEFAULT_DEVICE_HARDWARE_VERSION=0

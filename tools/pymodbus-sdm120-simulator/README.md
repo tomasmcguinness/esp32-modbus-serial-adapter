@@ -66,3 +66,4 @@ at the same bus) and it should read back the values above.
   defined in `config.json` returns a Modbus exception, same as a real meter
   would for an unsupported register.
 - Registers are read-only (`"write": []`), matching the real SDM120M.
+

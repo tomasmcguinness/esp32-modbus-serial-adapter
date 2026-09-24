@@ -1,0 +1,17 @@
+menu "Application Configuration"
+
+config MODBUS_BAUD_RATE
+    int "Modbus RTU baud rate"
+    default 9600
+    help
+        Baud rate of the RS-485 link to the inverter. Must match the
+        Modbus baud rate configured on the Solax inverter.
+
+config MODBUS_SLAVE_ADDRESS
+    int "Modbus slave address"
+    range 1 247
+    default 1
+    help
+        Modbus address of the Solax inverter.
+
+endmenu

@@ -1,0 +1,76 @@
+{
+    "server_list": {
+        "solax": {
+            "comm": "serial",
+            "port": "COM28",
+            "baudrate": 9600,
+            "bytesize": 8,
+            "parity": "N",
+            "stopbits": 1,
+            "timeout": 3,
+            "reconnect_delay": 2,
+            "framer": "rtu",
+            "identity": {
+                "VendorName": "pymodbus",
+                "ProductCode": "SOLAX-X1-G4-SIM",
+                "VendorUrl": "https://github.com/pymodbus-dev/pymodbus/",
+                "ProductName": "Solax X1-G4 Simulator",
+                "ModelName": "X1 Hybrid G4",
+                "MajorMinorRevision": "1.0.0"
+            }
+        }
+    },
+    "device_list": {
+        "solax": {
+            "setup": {
+                "di size": 0,
+                "co size": 0,
+                "ir size": 30,
+                "hr size": 30,
+                "shared blocks": true,
+                "type exception": true,
+                "defaults": {
+                    "value": {
+                        "bits": 0,
+                        "uint16": 0,
+                        "uint32": 0,
+                        "float32": 0.0,
+                        "string": " "
+                    },
+                    "action": {
+                        "bits": null,
+                        "uint16": null,
+                        "uint32": null,
+                        "float32": null,
+                        "string": null
+                    }
+                }
+            },
+            "invalid": [],
+            "write": [],
+            "bits": [],
+            "uint16": [
+                {"addr": 0, "value": 2401},
+                {"addr": 1, "value": 62},
+                {"addr": 2, "value": 1480},
+                {"addr": 3, "value": 3205},
+                {"addr": 4, "value": 2980},
+                {"addr": 5, "value": 31},
+                {"addr": 6, "value": 24},
+                {"addr": [7, 9], "value": 0},
+                {"addr": 10, "value": 990},
+                {"addr": 11, "value": 715},
+                {"addr": [12, 19], "value": 0},
+                {"addr": 20, "value": 1024},
+                {"addr": 21, "value": 20},
+                {"addr": 22, "value": 205},
+                {"addr": [23, 27], "value": 0},
+                {"addr": 28, "value": 67}
+            ],
+            "uint32": [],
+            "float32": [],
+            "string": [],
+            "repeat": []
+        }
+    }
+}

@@ -1,0 +1,81 @@
+{
+    "server_list": {
+        "kronoterm": {
+            "comm": "serial",
+            "port": "COM28",
+            "baudrate": 9600,
+            "bytesize": 8,
+            "parity": "N",
+            "stopbits": 1,
+            "timeout": 3,
+            "reconnect_delay": 2,
+            "framer": "rtu",
+            "identity": {
+                "VendorName": "pymodbus",
+                "ProductCode": "KRONOTERM-ADAPT-SIM",
+                "VendorUrl": "https://github.com/pymodbus-dev/pymodbus/",
+                "ProductName": "Kronoterm Adapt Simulator",
+                "ModelName": "Adapt 0312",
+                "MajorMinorRevision": "1.0.0"
+            }
+        }
+    },
+    "device_list": {
+        "kronoterm": {
+            "setup": {
+                "di size": 0,
+                "co size": 0,
+                "ir size": 2200,
+                "hr size": 2200,
+                "shared blocks": true,
+                "type exception": true,
+                "defaults": {
+                    "value": {
+                        "bits": 0,
+                        "uint16": 0,
+                        "uint32": 0,
+                        "float32": 0.0,
+                        "string": " "
+                    },
+                    "action": {
+                        "bits": null,
+                        "uint16": null,
+                        "uint32": null,
+                        "float32": null,
+                        "string": null
+                    }
+                }
+            },
+            "invalid": [],
+            "write": [],
+            "bits": [],
+            "uint16": [
+                {"addr": 1999, "value": 1},
+                {"addr": 2000, "value": 0},
+                {"addr": [2001, 2004], "value": 0},
+                {"addr": 2005, "value": 0},
+                {"addr": 2006, "value": 1},
+                {"addr": [2007, 2008], "value": 0},
+                {"addr": 2009, "value": 0},
+                {"addr": 2022, "value": 480},
+                {"addr": 2023, "value": 480},
+                {"addr": 2025, "value": 1},
+                {"addr": 2041, "value": 1},
+                {"addr": [2042, 2043], "value": 0},
+                {"addr": 2044, "value": 1},
+                {"addr": 2100, "value": 302},
+                {"addr": 2101, "value": 465},
+                {"addr": 2102, "value": 75},
+                {"addr": 2103, "value": 354},
+                {"addr": 2128, "value": 850},
+                {"addr": 2129, "value": 348},
+                {"addr": 2159, "value": 213},
+                {"addr": 2190, "value": 210}
+            ],
+            "uint32": [],
+            "float32": [],
+            "string": [],
+            "repeat": []
+        }
+    }
+}

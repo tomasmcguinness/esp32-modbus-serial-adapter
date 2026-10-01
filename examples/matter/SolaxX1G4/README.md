@@ -118,6 +118,10 @@ Add the device from your Matter controller using that code. The development buil
 
 OTA updates are supported through the Matter OTA Requestor. Remember to bump both `PROJECT_VER` and `PROJECT_VER_NUMBER` together when producing an update.
 
+## Testing without an inverter
+
+[`tools/pymodbus-sdm120-simulator`](../../../tools/pymodbus-sdm120-simulator) simulates the inverter on a PC using a USB to RS-485 adapter, using its `solax-x1-g4.json` config to return the same registers this example reads.
+
 ## Troubleshooting the RS-485 link
 
 `main/main.cpp` has a `MODBUS_LINK_TEST` switch for bringing up the physical link independently of Modbus framing:

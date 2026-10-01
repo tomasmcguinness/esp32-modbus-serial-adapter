@@ -2,7 +2,7 @@
     "server_list": {
         "solax": {
             "comm": "serial",
-            "port": "COM28",
+            "port": "/dev/ttyUSB0",
             "baudrate": 9600,
             "bytesize": 8,
             "parity": "N",

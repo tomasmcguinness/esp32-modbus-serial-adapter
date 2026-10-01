@@ -27,6 +27,20 @@ Only one Modbus RTU slave can be on the bus at a time — unplug/power down the
 
 ## Setup
 
+First, create a venv
+
+```
+python3 -m venv ./venv
+```
+
+and then start it.
+
+```
+source venv/bin/activate
+```
+
+Once it has started, install the required dependencies
+
 ```
 pip install pymodbus[serial] aiohttp
 ```
@@ -43,7 +57,7 @@ Edit `"port"` in the config file you're using to match, e.g. `"COM5"`.
 Run from this directory, picking the line for the device you want to simulate:
 
 ```
-pymodbus.simulator --modbus_server sdm120 --modbus_device sdm120 --json_file config.json
+pymodbus.simulator --modbus_server sdm120 --modbus_device sdm120 --json_file sdm120m.json
 pymodbus.simulator --modbus_server solax --modbus_device solax --json_file solax-x1-g4.json
 pymodbus.simulator --modbus_server kronoterm --modbus_device kronoterm --json_file kronoterm-adapt-0312.json
 ```
@@ -65,7 +79,7 @@ master at the same bus) and it should read back the values below.
 
 In every config the `addr` is the address sent on the wire.
 
-### SDM120M (`config.json`)
+### SDM120M (`sdm12m.json`)
 
 Matches the registers `examples/matter/SDM120M/main/sdm120.cpp` reads (function
 code 0x04, big-endian float32, no word swap):

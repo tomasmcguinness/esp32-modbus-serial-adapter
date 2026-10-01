@@ -7,6 +7,9 @@
 #include <app/server/Server.h>
 #include <setup_payload/OnboardingCodesUtil.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#include <platform/ESP32/OpenthreadLauncher.h>
+#endif
 
 #include "modbus.h"
 #include "sdm120.h"
@@ -210,6 +213,16 @@ extern "C" void app_main()
     electrical_power_measurement::attribute::create_voltage(cluster, 0);
     electrical_power_measurement::attribute::create_active_current(cluster, 0);
     electrical_power_measurement::attribute::create_active_power(cluster, 0);
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    // Thread runs on the ESP32-C6's own 802.15.4 radio.
+    esp_openthread_platform_config_t openthread_config = {
+        .radio_config = {.radio_mode = RADIO_MODE_NATIVE},
+        .host_config = {.host_connection_mode = HOST_CONNECTION_MODE_NONE},
+        .port_config = {.storage_partition_name = "nvs", .netif_queue_size = 10, .task_queue_size = 10},
+    };
+    set_openthread_platform_config(&openthread_config);
+#endif
 
     esp_err_t err = esp_matter::start(app_event_cb);
     if (err != ESP_OK)

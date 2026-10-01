@@ -9,7 +9,7 @@ This example turns the ESP32 Modbus Adapter into a Matter **Heat Pump** device f
 
 Any Matter controller can then show them (Apple Home, Google Home, Home Assistant, etc.).
 
-It is built with [ESP-IDF](https://docs.espressif.com/projects/esp-idf/) and [esp-matter](https://github.com/espressif/esp-matter), and targets the ESP32-C6 on the adapter board.
+It is built with [ESP-IDF](https://docs.espressif.com/projects/esp-idf/) and [esp-matter](https://github.com/espressif/esp-matter), and targets the ESP32-C6 on the adapter board. It runs Matter over Thread on the ESP32-C6's 802.15.4 radio, so your Matter controller needs a Thread border router.
 
 ## Matter device layout
 
@@ -132,7 +132,7 @@ The first build takes a while because it compiles the Matter SDK.
 
 ## Commissioning
 
-On first boot (or after all fabrics are removed) the device opens a commissioning window and advertises over BLE. The setup QR code is printed to the serial log:
+On first boot (or after all fabrics are removed) the device opens a commissioning window and advertises over BLE. The controller uses BLE to give it the Thread network credentials, after which it joins the Thread network as a router. The setup QR code is printed to the serial log:
 
 ```
 I (xxxx) Main: Generated QR CODE [22]: MT:...

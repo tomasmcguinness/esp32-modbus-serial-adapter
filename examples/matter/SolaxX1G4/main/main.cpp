@@ -8,6 +8,9 @@
 #include <app/util/attribute-storage.h>
 #include <setup_payload/OnboardingCodesUtil.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#include <platform/ESP32/OpenthreadLauncher.h>
+#endif
 
 #include "modbus.h"
 #include "solax.h"
@@ -397,6 +400,16 @@ extern "C" void app_main()
 
     ESP_LOGI(TAG, "Inverter endpoint %u: AC output %u, PV1 %u, PV2 %u, battery %u", inverter_endpoint_id,
              ac_output_endpoint_id, pv1_endpoint_id, pv2_endpoint_id, battery_endpoint_id);
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    // Thread runs on the ESP32-C6's own 802.15.4 radio.
+    esp_openthread_platform_config_t openthread_config = {
+        .radio_config = {.radio_mode = RADIO_MODE_NATIVE},
+        .host_config = {.host_connection_mode = HOST_CONNECTION_MODE_NONE},
+        .port_config = {.storage_partition_name = "nvs", .netif_queue_size = 10, .task_queue_size = 10},
+    };
+    set_openthread_platform_config(&openthread_config);
+#endif
 
     esp_err_t err = esp_matter::start(app_event_cb);
     if (err != ESP_OK)

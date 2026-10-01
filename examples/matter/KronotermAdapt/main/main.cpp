@@ -8,6 +8,9 @@
 #include <app/util/attribute-storage.h>
 #include <setup_payload/OnboardingCodesUtil.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#include <platform/ESP32/OpenthreadLauncher.h>
+#endif
 
 #include "kronoterm.h"
 #include "modbus.h"
@@ -491,6 +494,16 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "Heat pump endpoint %u: loop 1 %u, outdoor %u, flow %u, return %u, hot water %u",
              heat_pump_endpoint_id, loop1_endpoint_id, outdoor_endpoint_id, flow_endpoint_id, return_endpoint_id,
              dhw_endpoint_id);
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    // Thread runs on the ESP32-C6's own 802.15.4 radio.
+    esp_openthread_platform_config_t openthread_config = {
+        .radio_config = {.radio_mode = RADIO_MODE_NATIVE},
+        .host_config = {.host_connection_mode = HOST_CONNECTION_MODE_NONE},
+        .port_config = {.storage_partition_name = "nvs", .netif_queue_size = 10, .task_queue_size = 10},
+    };
+    set_openthread_platform_config(&openthread_config);
+#endif
 
     esp_err_t err = esp_matter::start(app_event_cb);
     if (err != ESP_OK)

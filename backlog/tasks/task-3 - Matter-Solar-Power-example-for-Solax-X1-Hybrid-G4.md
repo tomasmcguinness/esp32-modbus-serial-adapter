@@ -4,7 +4,7 @@ title: Matter Solar Power example for Solax X1 Hybrid G4
 status: In Progress
 assignee: []
 created_date: '2026-09-24 06:33'
-updated_date: '2026-09-24 06:45'
+updated_date: '2026-10-01 15:29'
 labels:
   - firmware
   - matter
@@ -34,4 +34,6 @@ New example examples/matter/SolaxX1G4, derived from the SDM120M example. Reads t
 
 <!-- SECTION:NOTES:BEGIN -->
 Implemented in examples/matter/SolaxX1G4. Builds clean with ESP-IDF 5.5.4 + esp_matter 1.4.2 (pinned ~1.4.2; unpinned ^1.4.0 resolved to 1.6.0, whose API differs). Endpoints are built by hand because solar_power::create puts the electrical sensor on the inverter endpoint and electrical_sensor::add forces NODE topology. Sub-parts use TREE topology and semantic tags (namespaces 0x0A/0x0F/0x07). Still needs testing against a real inverter: register map, scaling and signs, and chip-tool reads of the descriptor/EPM/power source.
+
+2026-10-01: Inverter endpoint reworked to use solar_power::create(). Endpoint 1 now carries Solar Power, Power Source (wired) and an AC Electrical Sensor with Node topology, so the AC output is measured on endpoint 1 and the separate AC output sub-part is removed. Sub-parts are now PV string 1 (EP2), PV string 2 (EP3) and battery (EP4), still Tree topology. solar_power::create() adds Electrical Energy Measurement; its attribute accessor is registered with a nominal accuracy, and CumulativeEnergyExported is null because no energy registers are read. Dynamic endpoint count reduced from 6 to 5. Builds with ESP-IDF v5.5.4; not tested on hardware.
 <!-- SECTION:NOTES:END -->

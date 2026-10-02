@@ -3,6 +3,7 @@
 #include <esp_matter.h>
 #include <nvs_flash.h>
 
+#include <app/clusters/electrical-energy-measurement-server/electrical-energy-measurement-server.h>
 #include <app/server/CommissioningWindowManager.h>
 #include <app/server/Server.h>
 #include <app/util/attribute-storage.h>
@@ -40,14 +41,21 @@ using namespace esp_matter::endpoint;
 
 using namespace chip::app::Clusters;
 
+// solar_power::create() adds the Electrical Energy Measurement cluster with
+// these features. Its attributes are served by this accessor.
+static ElectricalEnergyMeasurement::ElectricalEnergyMeasurementAttrAccess EnergyAttrAccess(
+    chip::BitMask<ElectricalEnergyMeasurement::Feature>(ElectricalEnergyMeasurement::Feature::kExportedEnergy,
+                                                        ElectricalEnergyMeasurement::Feature::kCumulativeEnergy),
+    chip::BitMask<ElectricalEnergyMeasurement::OptionalAttributes>());
+
 static uint16_t inverter_endpoint_id = 0;
-static uint16_t ac_output_endpoint_id = 0;
 static uint16_t pv1_endpoint_id = 0;
 static uint16_t pv2_endpoint_id = 0;
 static uint16_t battery_endpoint_id = 0;
 
-// Standard semantic tag namespaces (Matter 1.4) used to label the sub-parts,
-// so a controller can tell the two otherwise identical PV strings apart.
+// Standard semantic tag namespaces (Matter 1.4) used to label the inverter and
+// its sub-parts, so a controller can tell the two otherwise identical PV
+// strings apart.
 #define NAMESPACE_COMMON_NUMBER          0x07
 #define NAMESPACE_ELECTRICAL_MEASUREMENT 0x0A
 #define NAMESPACE_POWER_SOURCE           0x0F
@@ -303,15 +311,15 @@ static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type make_ta
 
 // The tag lists are referenced (not copied) by the data model, so they must
 // outlive the endpoints.
-static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type ac_output_tags[2];
+static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type inverter_tags[2];
 static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type pv1_tags[3];
 static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type pv2_tags[3];
 static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type battery_tags[2];
 
-static void set_sub_part_tag_lists()
+static void set_tag_lists()
 {
-    ac_output_tags[0] = make_tag(NAMESPACE_ELECTRICAL_MEASUREMENT, TAG_ELECTRICAL_AC, "AC Output");
-    ac_output_tags[1] = make_tag(NAMESPACE_POWER_SOURCE, TAG_POWER_SOURCE_SOLAR);
+    inverter_tags[0] = make_tag(NAMESPACE_ELECTRICAL_MEASUREMENT, TAG_ELECTRICAL_AC, "AC Output");
+    inverter_tags[1] = make_tag(NAMESPACE_POWER_SOURCE, TAG_POWER_SOURCE_SOLAR);
 
     pv1_tags[0] = make_tag(NAMESPACE_ELECTRICAL_MEASUREMENT, TAG_ELECTRICAL_DC, "String 1");
     pv1_tags[1] = make_tag(NAMESPACE_POWER_SOURCE, TAG_POWER_SOURCE_SOLAR);
@@ -325,11 +333,48 @@ static void set_sub_part_tag_lists()
     battery_tags[1] = make_tag(NAMESPACE_POWER_SOURCE, TAG_POWER_SOURCE_BATTERY);
 
     chip::DeviceLayer::PlatformMgr().LockChipStack();
-    ::SetTagList(ac_output_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(ac_output_tags));
+    ::SetTagList(inverter_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(inverter_tags));
     ::SetTagList(pv1_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(pv1_tags));
     ::SetTagList(pv2_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(pv2_tags));
     ::SetTagList(battery_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(battery_tags));
     chip::DeviceLayer::PlatformMgr().UnlockChipStack();
+}
+
+// The adapter doesn't read the inverter's energy counters yet, so
+// CumulativeEnergyExported stays null. Accuracy is mandatory, so it is set to
+// a nominal range.
+static const ElectricalEnergyMeasurement::Structs::MeasurementAccuracyRangeStruct::Type energy_accuracy_ranges[] = {
+    {
+        .rangeMin = 0,
+        .rangeMax = 1'000'000'000'000, // 1 GWh (mWh)
+        .percentMax = chip::MakeOptional(static_cast<chip::Percent100ths>(1000)),
+        .percentMin = chip::MakeOptional(static_cast<chip::Percent100ths>(100)),
+        .percentTypical = chip::MakeOptional(static_cast<chip::Percent100ths>(500)),
+    },
+};
+
+static void init_energy_measurement()
+{
+    ElectricalEnergyMeasurement::Structs::MeasurementAccuracyStruct::Type accuracy = {
+        .measurementType = chip::app::Clusters::detail::MeasurementTypeEnum::kElectricalEnergy,
+        .measured = true,
+        .minMeasuredValue = energy_accuracy_ranges[0].rangeMin,
+        .maxMeasuredValue = energy_accuracy_ranges[0].rangeMax,
+        .accuracyRanges = chip::app::DataModel::List<const ElectricalEnergyMeasurement::Structs::MeasurementAccuracyRangeStruct::Type>(energy_accuracy_ranges),
+    };
+
+    chip::DeviceLayer::PlatformMgr().LockChipStack();
+    CHIP_ERROR err = EnergyAttrAccess.Init();
+    if (err == CHIP_NO_ERROR)
+    {
+        err = ElectricalEnergyMeasurement::SetMeasurementAccuracy(inverter_endpoint_id, accuracy);
+    }
+    chip::DeviceLayer::PlatformMgr().UnlockChipStack();
+
+    if (err != CHIP_NO_ERROR)
+    {
+        ESP_LOGE(TAG, "Failed to set up energy measurement: %" CHIP_ERROR_FORMAT, err.Format());
+    }
 }
 
 extern "C" void app_main()
@@ -346,34 +391,23 @@ extern "C" void app_main()
     node_t *node = node::create(&node_config, app_attribute_update_cb, app_identification_cb);
     ABORT_APP_ON_FAILURE(node != nullptr, ESP_LOGE(TAG, "Failed to create Matter node"));
 
-    // Inverter: the top-level Solar Power endpoint. It carries the Power
-    // Source device type itself; the measurements live on its sub-parts.
-    // solar_power::create() is not used because it puts an Electrical Sensor
-    // on this endpoint instead of on separate sub-parts.
-    endpoint_t *inverter = endpoint::create(node, ENDPOINT_FLAG_NONE, NULL);
+    // Inverter: the top-level Solar Power endpoint. solar_power::create() also
+    // makes it a wired Power Source and an AC Electrical Sensor with Node
+    // topology, so the inverter's AC output is measured on this endpoint.
+    endpoint::solar_power::config_t inverter_config;
+    inverter_config.power_source_device.power_source.status = POWER_SOURCE_STATUS_ACTIVE;
+    inverter_config.power_source_device.power_source.order = 0;
+    strncpy(inverter_config.power_source_device.power_source.description, "Solar Inverter",
+            sizeof(inverter_config.power_source_device.power_source.description) - 1);
+    inverter_config.power_source_device.power_source.features.wired.wired_current_type = WIRED_CURRENT_TYPE_AC;
+    inverter_config.electrical_sensor.electrical_power_measurement.delegate = &ACOutputDelegate;
+    endpoint_t *inverter = endpoint::solar_power::create(node, &inverter_config, ENDPOINT_FLAG_NONE, NULL);
     ABORT_APP_ON_FAILURE(inverter != nullptr, ESP_LOGE(TAG, "Failed to create inverter endpoint"));
-
-    descriptor::config_t inverter_descriptor_config;
-    ABORT_APP_ON_FAILURE(descriptor::create(inverter, &inverter_descriptor_config, CLUSTER_FLAG_SERVER) != nullptr,
-                         ESP_LOGE(TAG, "Failed to create inverter descriptor cluster"));
-    add_device_type(inverter, ESP_MATTER_SOLAR_POWER_DEVICE_TYPE_ID, ESP_MATTER_SOLAR_POWER_DEVICE_TYPE_VERSION);
-
-    endpoint::power_source_device::config_t inverter_power_source_config;
-    inverter_power_source_config.power_source.status = POWER_SOURCE_STATUS_ACTIVE;
-    inverter_power_source_config.power_source.order = 0;
-    strncpy(inverter_power_source_config.power_source.description, "Solar Inverter",
-            sizeof(inverter_power_source_config.power_source.description) - 1);
-    inverter_power_source_config.power_source.feature_flags = cluster::power_source::feature::wired::get_id();
-    inverter_power_source_config.power_source.features.wired.wired_current_type = WIRED_CURRENT_TYPE_AC;
-    ABORT_APP_ON_FAILURE(endpoint::power_source_device::add(inverter, &inverter_power_source_config) == ESP_OK,
-                         ESP_LOGE(TAG, "Failed to add power source to inverter"));
     inverter_endpoint_id = endpoint::get_id(inverter);
 
-    // Sub-parts: AC output, the two PV strings (MPPT inputs) and the battery.
-    uint32_t ac = electrical_power_measurement::feature::alternating_current::get_id();
+    // Sub-parts: the two PV strings (MPPT inputs) and the battery.
     uint32_t dc = electrical_power_measurement::feature::direct_current::get_id();
 
-    ac_output_endpoint_id = endpoint::get_id(create_electrical_sensor_part(node, inverter, &ACOutputDelegate, ac));
     pv1_endpoint_id = endpoint::get_id(create_electrical_sensor_part(node, inverter, &PV1Delegate, dc));
     pv2_endpoint_id = endpoint::get_id(create_electrical_sensor_part(node, inverter, &PV2Delegate, dc));
 
@@ -398,8 +432,8 @@ extern "C" void app_main()
     cluster::power_source::attribute::create_bat_voltage(battery_power_source, nullable<uint32_t>(), nullable<uint32_t>(0), nullable<uint32_t>(0xFFFFFFFE));
     cluster::power_source::attribute::create_bat_percent_remaining(battery_power_source, nullable<uint8_t>(), nullable<uint8_t>(0), nullable<uint8_t>(200));
 
-    ESP_LOGI(TAG, "Inverter endpoint %u: AC output %u, PV1 %u, PV2 %u, battery %u", inverter_endpoint_id,
-             ac_output_endpoint_id, pv1_endpoint_id, pv2_endpoint_id, battery_endpoint_id);
+    ESP_LOGI(TAG, "Inverter endpoint %u: PV1 %u, PV2 %u, battery %u", inverter_endpoint_id, pv1_endpoint_id,
+             pv2_endpoint_id, battery_endpoint_id);
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     // Thread runs on the ESP32-C6's own 802.15.4 radio.
@@ -418,7 +452,8 @@ extern "C" void app_main()
         return;
     }
 
-    set_sub_part_tag_lists();
+    set_tag_lists();
+    init_energy_measurement();
 
 #if MODBUS_LINK_TEST == 1
     modbus_start_tx_test();

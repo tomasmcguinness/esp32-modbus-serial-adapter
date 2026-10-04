@@ -101,12 +101,12 @@ Connect the adapter's A and B terminals to the RS-485 A and B terminals of the h
 
 ### Heat pump settings
 
-In the controller's Modbus settings, set:
+The adapter defaults match the KSM controller's factory Modbus settings, so nothing needs changing on the heat pump:
 
-- **Baud rate:** 9600
-- **Modbus address:** 1
+- **Baud rate:** 115200
+- **Modbus address:** 20
 
-Both defaults can be changed on the adapter side with `idf.py menuconfig` → **Application Configuration**. The link is 8N1.
+These come from Kronoterm's [BMS system manual](https://nau-gmbh.ch/wp-content/uploads/2025/03/Installation-and-Operating-Manual-for-BMS-System-Datenpunktliste.pdf) for the KSM controller. If your controller has been reconfigured (19200 baud is the other supported rate), change the adapter side to match with `idf.py menuconfig` → **Application Configuration**. The link is 8N1.
 
 ### Status LED
 

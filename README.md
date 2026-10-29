@@ -9,7 +9,7 @@ The hardware folder contains a KiCad PCB design, designed around the ESP32-C6-MI
 
 My PCB design also includes some debugging headers, allowing access to UART0 for debugging and flashing.
 
-## Available to purchase
+### Available to purchase
 
 If you wish to purchase a pre-assembled board, I make them available on Tindie - https://www.tindie.com/products/edit/modbus-rtu-rs-485-esp32-c6-adapter/
 

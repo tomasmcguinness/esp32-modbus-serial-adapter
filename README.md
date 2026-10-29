@@ -7,6 +7,8 @@ The hardware folder contains a KiCad PCB design, designed around the ESP32-C6-MI
 
 <img width="994" height="664" alt="image" src="https://github.com/user-attachments/assets/64eba7b2-16b6-4c7b-80d4-a42a3e53cc8d" />
 
+My PCB design also includes some debugging headers, allowing access to UART0 for debugging and flashing.
+
 # Examples
 
 At present, there are three Matter based example available. I have these three devices at home and I use my boards to get information from them!
@@ -32,5 +34,10 @@ I adapted an ethernet patch cable to give me the right A/B terminal connections.
 ### Kronoterm Adapt 0312 Heat Pump
 
 Exposes readings like flow and return temperatures in addition to a read only thermostat over the Heat Pump Device Type. 
+
+It also reports on hot water status. I'm using it in my Matter powered Heating Monitor project.
+
+<img width="1013" height="353" alt="image" src="https://github.com/user-attachments/assets/c95cb5a3-31ae-46ff-9808-e3d10a7424a8" />
+
 
 

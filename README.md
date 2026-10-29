@@ -9,6 +9,10 @@ The hardware folder contains a KiCad PCB design, designed around the ESP32-C6-MI
 
 My PCB design also includes some debugging headers, allowing access to UART0 for debugging and flashing.
 
+## Available to purchase
+
+If you wish to purchase a pre-assembled board, I make them available on Tindie - https://www.tindie.com/products/edit/modbus-rtu-rs-485-esp32-c6-adapter/
+
 # Examples
 
 At present, there are three Matter based example available. I have these three devices at home and I use my boards to get information from them!
@@ -17,13 +21,13 @@ At present, there are three Matter based example available. I have these three d
 
 As I'm a big fan of Matter, I've been using that exclusively. All of these firmware examples just read data from the device. I hope to expand support in the future to allow some control, where it makes sense.
 
-### Eastern SDM120M 
+### Eastron SDM120M 
 
-The first device supported by this project is the Eastron SDM120M Single Phase Energy Meter. The readings from this device will be exposed using as a Matter Electrical Sensor Device Type.
+The first device supported by this project is the Eastron SDM120M Single Phase Energy Meter. The readings from this device will be exposed as a Matter Electrical Sensor Device Type.
 
 ### Solax X1-G4 Solar Inverter
 
-This exposes the various numbers, like power, PV string power and battery state over the Matter Solar Power Device Type. It can be connected to the CAD port of the inverter.
+This exposes the various numbers, like power, PV string power and battery state over the Matter Solar Power Device Type. It can be connected directly to the inverter.
 
 <img width="1370" height="912" alt="image" src="https://github.com/user-attachments/assets/a874894d-0c9c-4fda-89a8-bfab00cdb13d" />
 

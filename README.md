@@ -11,7 +11,7 @@ My PCB design also includes some debugging headers, allowing access to UART0 for
 
 ### Available to purchase
 
-If you wish to purchase a pre-assembled board, I make them available on Tindie - https://www.tindie.com/products/edit/modbus-rtu-rs-485-esp32-c6-adapter/
+If you wish to purchase a pre-assembled board, I make them available on Tindie - [https://www.tindie.com/products/edit/modbus-rtu-rs-485-esp32-c6-adapter](https://www.tindie.com/products/tomasmcguinness/modbus-rs485-esp32-c6-adapter/)
 
 # Examples
 

@@ -4,10 +4,11 @@ title: Switch the Matter examples from Wi-Fi to Thread
 status: Done
 assignee: []
 created_date: '2026-10-01 12:53'
-updated_date: '2026-10-01 13:12'
+updated_date: '2026-11-13 07:14'
 labels:
   - examples
 dependencies: []
+ordinal: 1000
 ---
 
 ## Description

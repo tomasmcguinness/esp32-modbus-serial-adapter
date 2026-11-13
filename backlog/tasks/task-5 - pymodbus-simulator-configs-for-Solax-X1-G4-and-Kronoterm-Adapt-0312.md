@@ -4,10 +4,11 @@ title: pymodbus simulator configs for Solax X1-G4 and Kronoterm Adapt 0312
 status: Done
 assignee: []
 created_date: '2026-10-01 10:57'
-updated_date: '2026-10-01 10:58'
+updated_date: '2026-11-13 07:14'
 labels:
   - tools
 dependencies: []
+ordinal: 2000
 ---
 
 ## Description

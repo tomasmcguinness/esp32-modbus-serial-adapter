@@ -1,10 +1,10 @@
 ---
 id: TASK-4
 title: Matter Heat Pump example for Kronoterm Adapt 0312
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-24 16:52'
-updated_date: '2026-09-25 05:40'
+updated_date: '2026-11-13 07:14'
 labels:
   - firmware
   - matter
@@ -13,6 +13,7 @@ references:
   - /home/tomasmcguinness/.claude/plans/like-the-sdm120m-and-jiggly-cook.md
   - >-
     https://github.com/kosl/kronoterm2mqtt/blob/main/kronoterm2mqtt/definitions/kronoterm_ksm.toml
+ordinal: 4000
 ---
 
 ## Description

@@ -1,10 +1,10 @@
 ---
 id: TASK-3
 title: Matter Solar Power example for Solax X1 Hybrid G4
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-24 06:33'
-updated_date: '2026-10-01 15:29'
+updated_date: '2026-11-13 07:14'
 labels:
   - firmware
   - matter
@@ -12,6 +12,7 @@ dependencies: []
 references:
   - >-
     /home/tomasmcguinness/.claude/plans/using-the-sdm120m-example-graceful-key.md
+ordinal: 3000
 ---
 
 ## Description

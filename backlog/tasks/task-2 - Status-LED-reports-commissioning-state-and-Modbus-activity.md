@@ -1,13 +1,14 @@
 ---
 id: TASK-2
 title: Status LED reports commissioning state and Modbus activity
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-08-26 09:27'
-updated_date: '2026-08-26 09:35'
+updated_date: '2026-11-13 07:14'
 labels: []
 dependencies: []
 priority: medium
+ordinal: 5000
 ---
 
 ## Description

@@ -57,6 +57,7 @@
                 {"addr": 2006, "value": 1},
                 {"addr": [2007, 2008], "value": 0},
                 {"addr": 2009, "value": 0},
+                {"addr": 2010, "value": 0},
                 {"addr": 2022, "value": 480},
                 {"addr": 2023, "value": 480},
                 {"addr": 2025, "value": 1},

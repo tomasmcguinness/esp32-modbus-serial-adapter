@@ -15,6 +15,7 @@ static const char *TAG = "Kronoterm";
 #define REG_ERROR_STATUS       2006 // 0 none, 1 warning, 2 error, 3 notification
 #define REG_OPERATION_REGIME   2007 // KRONOTERM_REGIME_*
 #define REG_FORCED_DHW         2010 // 0 off, 1 fast DHW heating active
+#define REG_DEFROSTING         2011 // 0 off, 1 defrosting
 #define REG_DHW_SETPOINT       2023 // 0.1 °C, desired DHW temperature
 #define REG_DHW_CURRENT_SETPOINT 2024 // 0.1 °C, including ECO/comfort offsets
 #define REG_DHW_OPERATION      2026 // 0 off, 1 on, 2 scheduled
@@ -44,7 +45,7 @@ struct register_block_t
 };
 
 static register_block_t blocks[] = {
-    { REG_SYSTEM_OPERATION, REG_FORCED_DHW - REG_SYSTEM_OPERATION + 1, {} },
+    { REG_SYSTEM_OPERATION, REG_DEFROSTING - REG_SYSTEM_OPERATION + 1, {} },
     { REG_DHW_SETPOINT, REG_DHW_CURRENT_SETPOINT - REG_DHW_SETPOINT + 1, {} },
     { REG_DHW_OPERATION, 1, {} },
     { REG_LOOP1_OPERATION, REG_LOOP1_PUMP - REG_LOOP1_OPERATION + 1, {} },
@@ -93,6 +94,9 @@ static void decode(kronoterm_reading_t *r)
     r->error_status = reg(REG_ERROR_STATUS);
     r->regime = reg(REG_OPERATION_REGIME);
     r->forced_dhw = reg(REG_FORCED_DHW) != 0;
+    // Kronoterm's BMS manual documents 2011 alongside the rest of this block. 2019,
+    // also "Defrosting", is a manual trigger and is deliberately not read.
+    r->defrosting = reg(REG_DEFROSTING) != 0;
 
     r->loop1_on = reg(REG_LOOP1_OPERATION) != 0;
     r->loop1_pump_on = reg(REG_LOOP1_PUMP) != 0;
@@ -144,6 +148,7 @@ void kronoterm_read_task(void *arg)
                      reading.loop1_room_setpoint_c);
             ESP_LOGI(TAG, "DHW:     operation %u  tank %.1f C  setpoint %.1f C%s", reading.dhw_operation,
                      reading.dhw_temp_c, reading.dhw_setpoint_c, reading.forced_dhw ? "  (fast heating)" : "");
+            ESP_LOGI(TAG, "Defrost: %s", reading.defrosting ? "yes" : "no");
 
             matter_update_readings(reading);
         }

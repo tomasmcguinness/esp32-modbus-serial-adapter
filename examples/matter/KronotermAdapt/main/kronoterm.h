@@ -41,6 +41,10 @@ struct kronoterm_reading_t
     uint16_t dhw_operation; // 0 off, 1 on, 2 scheduled
 
     float power_w;
+
+    // Register 2011: the heat pump is defrosting its outdoor coil. Independent of
+    // working_function -- it can defrost while heating or making hot water.
+    bool defrosting;
 };
 
 void kronoterm_read_task(void *arg);

@@ -132,6 +132,7 @@ and heating loop 1, with DHW enabled and no faults.
 | Error status                   | 2006   | 2005   | 0   | None        |
 | Operation regime               | 2007   | 2006   | 1   | Heating     |
 | Fast DHW heating               | 2010   | 2009   | 0   | Off         |
+| Defrosting                     | 2011   | 2010   | 0   | No          |
 | DHW setpoint                   | 2023   | 2022   | 480 | 48.0 °C     |
 | DHW current setpoint           | 2024   | 2023   | 480 | 48.0 °C     |
 | DHW operation                  | 2026   | 2025   | 1   | On          |
@@ -157,6 +158,9 @@ Useful values to try:
 - Error status `1` (warning), `2` (error) or `3` (notification).
 - Loop 1 room temperature `65136` (-40.0 °C), which is what the controller
   reports when no room thermostat is fitted.
+- Defrosting `1`, which sets the Defrost endpoint's StateValue. Combine it with
+  working function `1` to check that a defrost during hot water leaves the
+  water heater reporting hot water.
 
 ### Negative values
 

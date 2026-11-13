@@ -46,6 +46,7 @@ static uint16_t outdoor_endpoint_id = 0;
 static uint16_t flow_endpoint_id = 0;
 static uint16_t return_endpoint_id = 0;
 static uint16_t dhw_endpoint_id = 0;
+static uint16_t defrost_endpoint_id = 0;
 
 // Standard semantic tag namespaces (Matter 1.4) used to label the sub-parts,
 // so a controller can tell the three temperature sensors apart.
@@ -57,6 +58,14 @@ static uint16_t dhw_endpoint_id = 0;
 #define TAG_DIRECTION_BACKWARD           0x05
 #define TAG_LOCATION_OUTDOOR             0x01
 #define TAG_NUMBER_ONE                   0x01
+
+// No standard namespace describes defrost, so the defrost sub-part carries a
+// manufacturer tag (mfgCode set to our vendor ID). Its label is what matters:
+// controllers -- the heating monitor among them -- find the endpoint by the
+// label "Defrost", which must not change.
+#define NAMESPACE_MANUFACTURER_DEFROST   0x00
+#define TAG_DEFROST                      0x00
+#define DEFROST_LABEL                    "Defrost"
 
 // Power Source cluster enum values.
 #define POWER_SOURCE_STATUS_ACTIVE       1
@@ -311,6 +320,9 @@ static void apply_readings(intptr_t arg)
     report_temperature(flow_endpoint_id, r->flow_temp_c);
     report_temperature(return_endpoint_id, r->return_temp_c);
 
+    esp_matter_attr_val_t defrost = esp_matter_bool(r->defrosting);
+    attribute::report(defrost_endpoint_id, BooleanState::Id, BooleanState::Attributes::StateValue::Id, &defrost);
+
     delete r;
 }
 
@@ -356,6 +368,24 @@ static endpoint_t *create_thermostat_part(node_t *node, endpoint_t *parent)
 
     cluster_t *thermostat_cluster = cluster::get(part, Thermostat::Id);
     cluster::thermostat::attribute::create_thermostat_running_state(thermostat_cluster, 0);
+
+    add_tag_list_feature(part);
+    ABORT_APP_ON_FAILURE(set_parent_endpoint(part, parent) == ESP_OK, ESP_LOGE(TAG, "Failed to parent sub-part"));
+
+    return part;
+}
+
+// Defrost flag. Matter has no attribute for defrost, so it is a Boolean State
+// whose StateValue is true while the heat pump defrosts. Contact Sensor is the
+// standard device type that carries Boolean State on its own; a controller that
+// renders it as a contact shows "closed" while defrosting.
+static endpoint_t *create_defrost_part(node_t *node, endpoint_t *parent)
+{
+    contact_sensor::config_t config;
+    config.boolean_state.state_value = false;
+
+    endpoint_t *part = contact_sensor::create(node, &config, ENDPOINT_FLAG_NONE, NULL);
+    ABORT_APP_ON_FAILURE(part != nullptr, ESP_LOGE(TAG, "Failed to create defrost endpoint"));
 
     add_tag_list_feature(part);
     ABORT_APP_ON_FAILURE(set_parent_endpoint(part, parent) == ESP_OK, ESP_LOGE(TAG, "Failed to parent sub-part"));
@@ -413,6 +443,7 @@ static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type loop1_t
 static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type outdoor_tags[1];
 static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type flow_tags[1];
 static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type return_tags[1];
+static chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type defrost_tags[1];
 
 static void set_sub_part_tag_lists()
 {
@@ -420,12 +451,15 @@ static void set_sub_part_tag_lists()
     outdoor_tags[0] = make_tag(NAMESPACE_COMMON_LOCATION, TAG_LOCATION_OUTDOOR, "Outdoor");
     flow_tags[0] = make_tag(NAMESPACE_COMMON_DIRECTION, TAG_DIRECTION_FORWARD, "Flow");
     return_tags[0] = make_tag(NAMESPACE_COMMON_DIRECTION, TAG_DIRECTION_BACKWARD, "Return");
+    defrost_tags[0] = make_tag(NAMESPACE_MANUFACTURER_DEFROST, TAG_DEFROST, DEFROST_LABEL);
+    defrost_tags[0].mfgCode = chip::app::DataModel::MakeNullable(static_cast<chip::VendorId>(CONFIG_DEVICE_VENDOR_ID));
 
     chip::DeviceLayer::PlatformMgr().LockChipStack();
     ::SetTagList(loop1_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(loop1_tags));
     ::SetTagList(outdoor_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(outdoor_tags));
     ::SetTagList(flow_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(flow_tags));
     ::SetTagList(return_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(return_tags));
+    ::SetTagList(defrost_endpoint_id, chip::Span<const chip::app::Clusters::Descriptor::Structs::SemanticTagStruct::Type>(defrost_tags));
     chip::DeviceLayer::PlatformMgr().UnlockChipStack();
 }
 
@@ -483,17 +517,18 @@ extern "C" void app_main()
 
     heat_pump_endpoint_id = endpoint::get_id(heat_pump);
 
-    // Sub-parts: heating loop 1, the outdoor, flow and return sensors and the
-    // hot water tank.
+    // Sub-parts: heating loop 1, the outdoor, flow and return sensors, the hot
+    // water tank and the defrost flag. 
     loop1_endpoint_id = endpoint::get_id(create_thermostat_part(node, heat_pump));
     outdoor_endpoint_id = endpoint::get_id(create_temperature_sensor_part(node, heat_pump));
     flow_endpoint_id = endpoint::get_id(create_temperature_sensor_part(node, heat_pump));
     return_endpoint_id = endpoint::get_id(create_temperature_sensor_part(node, heat_pump));
     dhw_endpoint_id = endpoint::get_id(create_water_heater_part(node, heat_pump));
+    defrost_endpoint_id = endpoint::get_id(create_defrost_part(node, heat_pump));
 
-    ESP_LOGI(TAG, "Heat pump endpoint %u: loop 1 %u, outdoor %u, flow %u, return %u, hot water %u",
+    ESP_LOGI(TAG, "Heat pump endpoint %u: loop 1 %u, outdoor %u, flow %u, return %u, hot water %u, defrost %u",
              heat_pump_endpoint_id, loop1_endpoint_id, outdoor_endpoint_id, flow_endpoint_id, return_endpoint_id,
-             dhw_endpoint_id);
+             dhw_endpoint_id, defrost_endpoint_id);
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     // Thread runs on the ESP32-C6's own 802.15.4 radio.

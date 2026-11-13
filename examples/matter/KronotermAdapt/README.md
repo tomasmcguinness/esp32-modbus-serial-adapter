@@ -6,6 +6,7 @@ This example turns the ESP32 Modbus Adapter into a Matter **Heat Pump** device f
 - heating loop 1, as a thermostat
 - the outdoor, flow and return temperatures
 - the hot water tank, including whether the heat pump is heating it right now
+- whether the heat pump is defrosting
 
 Any Matter controller can then show them (Apple Home, Google Home, Home Assistant, etc.).
 
@@ -23,12 +24,22 @@ The heat pump is the top-level endpoint. Each thing it measures is a sub-part (l
 | 4        | Flow           | Temperature Sensor                                   | Heat pump outlet (flow) temperature                                    |
 | 5        | Return         | Temperature Sensor                                   | Heat pump inlet (return) temperature                                   |
 | 6        | Hot water      | Water Heater                                         | Tank temperature, target temperature, heating now, fast heating, DHW mode |
+| 7        | Defrost        | Contact Sensor                                       | Boolean State `StateValue`: true while the heat pump defrosts          |
 
 The Electrical Sensor uses the Power Topology **Node** feature, because it measures the whole heat pump. The sub-parts carry Descriptor semantic tags so controllers can tell the three temperature sensors apart:
 
 - **Loop 1:** Common Number One, labelled "Loop 1".
 - **Outdoor:** Common Location Outdoor, labelled "Outdoor".
 - **Flow / Return:** Common Direction Forward / Backward, labelled "Flow" and "Return". Matter has no flow/return namespace, so the labels carry the meaning.
+- **Defrost:** a manufacturer tag (the vendor ID as `mfgCode`, namespace 0, tag 0), labelled "Defrost". No standard namespace describes defrost. The [heating monitor](https://github.com/tomasmcguinness/matter-esp32-heating-monitor) finds the endpoint by this label, so keep it as it is.
+
+### Defrost mapping
+
+Matter has no defrost attribute, so defrost is a **Boolean State** sub-part. Its `StateValue` is true while register 2011 reads 1. Contact Sensor is the standard device type that carries Boolean State on its own, so a controller that shows it as a contact shows "closed" while the heat pump defrosts.
+
+Defrost doesn't depend on the working function: the heat pump can defrost while heating or while making hot water. Loop 1's `ThermostatRunningState` and the water heater's `HeatDemand` keep reporting the working function, and a defrost doesn't change them.
+
+Register 2011 is read with the rest of the 2000–2011 block. Like every other reading, a failed poll keeps the last value it reported (false from boot) rather than reporting "not defrosting". Register 2019, also called "Defrosting", is a manual trigger and isn't touched.
 
 ### Thermostat mapping
 
@@ -68,6 +79,7 @@ Every 10 seconds the adapter reads these holding registers (function code `0x03`
 | 2006     | Error/warning status                   | -      | Log only                          |
 | 2007     | Operation regime (0 cooling, 1 heating, 2 off) | - | EP2 SystemMode                  |
 | 2010     | Fast DHW heating                       | -      | EP6 BoostState                    |
+| 2011     | Defrosting (0 no, 1 yes)               | -      | EP7 StateValue                    |
 | 2023     | Desired DHW temperature                | 0.1 °C | Log only                          |
 | 2024     | Current desired DHW temperature        | 0.1 °C | EP6 OccupiedHeatingSetpoint       |
 | 2026     | DHW operation (0 off, 1 on, 2 scheduled) | -    | EP6 CurrentMode, SystemMode       |
@@ -178,3 +190,4 @@ Every request and response is logged as hex, and each poll logs the decoded read
 - **Loop 1 and hot water only.** The buffer tank, pool and loops 2–4 aren't exposed yet.
 - **No tank volume or tank percentage.** The hot water tank doesn't use the Water Heater Management Energy Management or Tank Percent features, because the Modbus map has nothing to back them.
 - **Community register map.** It hasn't been checked against an official Kronoterm document for the Adapt 0312. Some models report -40 °C for the loop thermostat registers, which is why LocalTemperature falls back to null.
+- **Defrost is unverified on a real unit.** Register 2011 is documented in Kronoterm's BMS manual but hasn't yet been seen to change on an Adapt 0312 during a defrost. The log prints `Defrost: yes/no` every poll, so compare it with the heat pump's display the next time it defrosts.
